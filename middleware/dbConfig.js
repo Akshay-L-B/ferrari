@@ -1,21 +1,14 @@
-const sql=require("mssql/msnodesqlv8")
-var config={
-  server:"BHARATH\\SQLEXPRESS",
-  database:"players",
-  driver:"msnodesqlv8",
-  user:"sa",
-  password:"123",
-  options:{
-    trustedCOnnection:true
-  }
-}
+// dbConfig.js
+const dbConfig = {
+  user: "root",
+  password: "Bh@rath9",
+  server: "localhost",
+  port: 3306,
+  database: "dbms",
+  options: {
+    encrypt: false, // If you are using Azure, set to true
+    trustServerCertificate: true, // For local development, you might need to set this to true
+  },
+};
 
-sql.connect(config,function(err){
-    if(err)console.log(err);
-    var request=new sql.Request();
-    request.query("select * from players",function(err,records){
-      if(err)console.log(err);
-      else console.log(records);
-    })
-
-})
+export default dbConfig;

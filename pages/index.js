@@ -1,226 +1,235 @@
-import { useState,useEffect } from 'react';
-import { useRouter } from 'next/router'; // Import the useRouter hook
-import 'react-toastify/dist/ReactToastify.css';
-import { ToastContainer, toast } from 'react-toastify';
-require('dotenv').config();
+import { useState, useEffect } from "react";
+import { useRouter } from "next/router"; // Import the useRouter hook
+import "react-toastify/dist/ReactToastify.css";
+import { ToastContainer, toast } from "react-toastify";
+require("dotenv").config();
 
-export default function Home({user,setUser}) {
-  const [userType, setUserType] = useState('');
+export default function Home({ user, setUser }) {
+  const [userType, setUserType] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const router = useRouter();
   const isEmailValid = (email) => {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return emailRegex.test(email);
-    };
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!isEmailValid(email)) {
-     toast.error('Invalid email format!', {
-       position: 'top-center',
-       autoClose: 1500,
-       hideProgressBar: true,
-       closeOnClick: true,
-       pauseOnHover: true,
-       draggable: true,
-       progress: undefined,
-       theme: 'dark',
-     });
-     return;
-   }
+      toast.error("Invalid email format!", {
+        position: "top-center",
+        autoClose: 1500,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+      });
+      return;
+    }
 
     let data = { email, password };
     try {
       let res;
-      if (userType === 'user') {
-        res = await fetch('/api/user_login', {
-          method: 'POST',
+      if (userType === "user") {
+        res = await fetch("/api/user_login", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
         });
-      } else if (userType === 'admin') {
-        res = await fetch('/api/admin_login', {
-          method: 'POST',
+      } else if (userType === "admin") {
+        res = await fetch("/api/admin_login", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
         });
       }
       let response = await res.json();
-      setEmail('');
-      setPassword('');
+      setEmail("");
+      setPassword("");
       if (response.success) {
-        console.log(`Logging in as ${userType} with email: ${email} and password: ${password}`);
-        localStorage.setItem('token', response.token);
+        console.log(
+          `Logging in as ${userType} with email: ${email} and password: ${password}`
+        );
+        localStorage.setItem("token", response.token);
         toast.success(`You are successfully logged in as ${userType}!`, {
-          position: 'top-center',
+          position: "top-center",
           autoClose: 1500,
           hideProgressBar: true,
           closeOnClick: true,
           pauseOnHover: true,
           draggable: true,
           progress: undefined,
-          theme: 'light',
+          theme: "light",
         });
         if (userType) {
-       await setTimeout(() => {
-         if (userType === "admin") {
-           router.push({
-             pathname: '/admin',
-             query: { email: response.email },
-           });
-         } else if (userType === "user") {
-           router.push({
-             pathname: '/user',
-             query: { email: response.email },
-           });
-         }
-       }, 2000);
-     }
+          await setTimeout(() => {
+            if (userType === "admin") {
+              router.push({
+                pathname: "/admin",
+                query: { email: response.admin.email },
+              });
+            } else if (userType === "user") {
+              router.push({
+                pathname: "/user",
+                query: { userID: response.user.id },
+              });
+            }
+          }, 2000);
+        }
       } else {
-        toast.error('Invalid credentials!', {
-          position: 'top-center',
+        toast.error("Invalid credentials!", {
+          position: "top-center",
           autoClose: 1500,
           hideProgressBar: true,
           closeOnClick: true,
           pauseOnHover: true,
           draggable: true,
           progress: undefined,
-          theme: 'dark',
+          theme: "dark",
         });
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
     }
   };
   const handleSignUp = async (e) => {
     e.preventDefault();
     if (!isEmailValid(email)) {
-     toast.error('Invalid email format!', {
-       position: 'top-center',
-       autoClose: 1500,
-       hideProgressBar: true,
-       closeOnClick: true,
-       pauseOnHover: true,
-       draggable: true,
-       progress: undefined,
-       theme: 'dark',
-     });
-     return;
-   }
+      toast.error("Invalid email format!", {
+        position: "top-center",
+        autoClose: 1500,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+      });
+      return;
+    }
 
-    if(userType==="admin")
-    {
+    if (userType === "admin") {
       if (!email || !password || !name) {
-   toast.error('Please fill in all the required details.', {
-     position: 'top-center',
-     autoClose: 1500,
-     hideProgressBar: true,
-     closeOnClick: true,
-     pauseOnHover: true,
-     draggable: true,
-     progress: undefined,
-     theme: 'dark',
-     });
-   return;
-    }
-    }
-    else if(userType==="user")
-    {
+        toast.error("Please fill in all the required details.", {
+          position: "top-center",
+          autoClose: 1500,
+          hideProgressBar: true,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "dark",
+        });
+        return;
+      }
+    } else if (userType === "user") {
       if (!email || !password || !name || !phoneNumber) {
-   toast.error('Please fill in all the required details.', {
-     position: 'top-center',
-     autoClose: 1500,
-     hideProgressBar: true,
-     closeOnClick: true,
-     pauseOnHover: true,
-     draggable: true,
-     progress: undefined,
-     theme: 'dark',
-     });
-   return;
+        toast.error("Please fill in all the required details.", {
+          position: "top-center",
+          autoClose: 1500,
+          hideProgressBar: true,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "dark",
+        });
+        return;
+      }
     }
-    }
-    let data = { email, password, name,phoneNumber};
+    let data = { email, password, name, phoneNumber };
+    console.log(
+      data.email +
+        " " +
+        data.password +
+        " " +
+        data.name +
+        " " +
+        data.phoneNumber +
+        " " +
+        userType
+    );
     try {
       let res;
 
-        if (userType === 'user') {
-        res = await fetch('/api/signup_user', {
-          method: 'POST',
+      if (userType === "user") {
+        res = await fetch("/api/user_registration", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
         });
-      }
-      else if (userType === 'admin') {
-        res = await fetch('/api/signup_admin', {
-          method: 'POST',
+      } else if (userType === "admin") {
+        res = await fetch("/api/admin_registration", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
         });
       }
 
       let response = await res.json();
-      setEmail('');
-      setName('');
-      setPassword('');
-      setPhoneNumber('');
+      console.log(response + " " + response.success);
+      setEmail("");
+      setName("");
+      setPassword("");
+      setPhoneNumber("");
 
       if (response.success) {
-          localStorage.setItem('token', response.token);//Put Token to local storage which is required to be usd later for user authentication
-          localStorage.setItem('email', response.email);
+        localStorage.setItem("token", response.token); //Put Token to local storage which is required to be usd later for user authentication
+        localStorage.setItem("email", response.email);
         toast.success(`Your Account has been created as a ${userType}!`, {
-          position: 'top-center',
+          position: "top-center",
           autoClose: 1500,
           hideProgressBar: true,
           closeOnClick: true,
           pauseOnHover: true,
           draggable: true,
           progress: undefined,
-          theme: 'light',
+          theme: "light",
         });
-        if (userType === 'admin')
-        {
+        if (userType === "admin") {
           router.push("/");
-        } else if (userType === 'user') {
+        } else if (userType === "user") {
           router.push("/");
         }
       } else {
-        toast.error('Signup failed. Please try again.', {
-          position: 'top-center',
+        toast.error("Signup failed. Please try again.", {
+          position: "top-center",
           autoClose: 1500,
           hideProgressBar: true,
           closeOnClick: true,
           pauseOnHover: true,
           draggable: true,
           progress: undefined,
-          theme: 'dark',
+          theme: "dark",
         });
       }
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error("Signup error:", error);
     }
   };
   const handleUserTypeSelect = (selectedUserType) => {
     setUserType(selectedUserType);
   };
   const handleGoBack = () => {
-    setUserType('');
+    setUserType("");
     setIsSignUp(false);
-    setEmail('');
-  setPassword('');
-  setName('');
-  setPhoneNumber('');
+    setEmail("");
+    setPassword("");
+    setName("");
+    setPhoneNumber("");
   };
 
   return (
@@ -240,7 +249,9 @@ export default function Home({user,setUser}) {
       />
       {userType ? (
         <div className="border p-8 rounded-md shadow-md max-w-md w-full">
-          <h1 className="text-2xl font-bold mb-4">{isSignUp ? 'Sign Up' : 'Login'}</h1>
+          <h1 className="text-2xl font-bold mb-4">
+            {isSignUp ? "Sign Up" : "Login"}
+          </h1>
           <label className="block mb-1">Email:</label>
           <input
             type="email"
@@ -257,7 +268,7 @@ export default function Home({user,setUser}) {
           />
           {isSignUp && (
             <>
-              {userType === 'admin' && (
+              {userType === "admin" && (
                 <>
                   <label className="block mb-1">Name:</label>
                   <input
@@ -268,7 +279,7 @@ export default function Home({user,setUser}) {
                   />
                 </>
               )}
-              {userType === 'user' && (
+              {userType === "user" && (
                 <>
                   <label className="block mb-1">Name:</label>
                   <input
@@ -315,26 +326,26 @@ export default function Home({user,setUser}) {
         <div className="border p-8 rounded-md shadow-md max-w-md w-full">
           <h1 className="text-2xl font-bold mb-4">Select User Type</h1>
           <div className="flex justify-between">
-          <button
-            onClick={() => handleUserTypeSelect('admin')}
-            className="bg-blue-500 text-white p-2 rounded cursor-pointer hover:bg-blue-700"
-          >
-            Admin
-          </button>
             <button
-              onClick={() => handleUserTypeSelect('user')}
+              onClick={() => handleUserTypeSelect("admin")}
+              className="bg-blue-500 text-white p-2 rounded cursor-pointer hover:bg-blue-700"
+            >
+              Admin
+            </button>
+            <button
+              onClick={() => handleUserTypeSelect("user")}
               className="bg-green-500 text-white p-2 rounded cursor-pointer hover:bg-green-700"
             >
               User
             </button>
           </div>
           <p className="mt-4 text-sm text-gray-500">
-            {isSignUp ? 'Already have an account? ' : 'Don\'t have an account? '}
+            {isSignUp ? "Already have an account? " : "Don't have an account? "}
             <span
               onClick={() => setIsSignUp(!isSignUp)}
               className="font-semibold text-indigo-600 hover:text-indigo-500 cursor-pointer"
             >
-              {isSignUp ? 'Sign in' : 'Sign up'}
+              {isSignUp ? "Sign in" : "Sign up"}
             </span>
           </p>
         </div>

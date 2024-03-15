@@ -1,42 +1,53 @@
-import sql from 'mssql';
-import bcrypt from 'bcrypt';
-import dbConfig from '../../middleware/dbConfig';
+import mysql from "mysql2";
+import bcrypt from "bcrypt";
+import dbConfig from "../../middleware/dbConfig";
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
+const handler = async (req, res) => {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method Not Allowed" });
   }
 
   const { email, password } = req.body;
 
   // Validate input
   if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required' });
+    return res.status(400).json({ error: "Email and password are required" });
   }
 
+  const connection = mysql.createConnection(dbConfig);
+
   try {
-    await sql.connect(dbConfig);
+    connection.connect();
 
     // Check if the admin with the given email exists
-    const adminResult = await sql.query`SELECT * FROM admins WHERE email = ${email}`;
-    const admin = adminResult.recordset[0];
+    const [adminResult] = await connection
+      .promise()
+      .query("SELECT * FROM admins WHERE email = ?", [email]);
+
+    const admin = adminResult[0]; // Accessing the first record
 
     if (!admin) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: "Invalid credentials" });
     }
 
     // Check if the provided password matches the hashed password in the database
     const passwordMatch = await bcrypt.compare(password, admin.password);
 
     if (!passwordMatch) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    res.status(200).json({ message: 'Admin login successful', admin: { email: admin.email } });
+    res.status(201).json({
+      success: true,
+      message: "Admin login successful",
+      admin: { email: admin.email },
+    });
   } catch (error) {
-    console.error('Error logging in admin:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error("Error logging in admin:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   } finally {
-    sql.close();
+    connection.end();
   }
-}
+};
+
+export default handler;
