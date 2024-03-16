@@ -18,8 +18,6 @@ const NewEvent = () => {
 
     checkToken();
   }, []);
-
-  const {slug } = router.query;
   const initialEventData = {
     EventName: "",
     EventHost: "",
@@ -36,22 +34,22 @@ const NewEvent = () => {
     maxMarks: "",
     weightage: "",
   });
-  const [eventData, setEventData] = useState(null);
-  const [occupiedSlots, setOccupiedSlots] = useState([]);
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const response = await fetch(`/api/oneevent?EventID=${slug}`);
-        const data = await response.json();
-        setEventData(data);
-        set
-      } catch (error) {
-        console.error("Error fetching courses:", error);
-      }
-    };
 
-    fetchEvents();
-  }, []);
+  const [occupiedSlots, setOccupiedSlots] = useState([]);
+  // useEffect(() => {
+  //   const fetchEvents = async () => {
+  //     try {
+  //       const response = await fetch("/api/allcourses");
+  //       const data = await response.json();
+  //     } catch (error) {
+  //       console.error("Error fetching courses:", error);
+  //     }
+  //   };
+
+  //   fetchEvents();
+  // }, []);
+
+  const [eventData, setEventData] = useState(initialEventData);
   const [exams, setExams] = useState([]);
   const handleAddExam = () => {
     setExams([...exams, examData]);
@@ -76,19 +74,17 @@ const NewEvent = () => {
     if (!shouldUpdate) {
       return;
     }
-    let data = {
-      eventData
-    };
-    let res = await fetch(`/api/updateevent?EventID=${slug}`, {
-      method: "PUT",
+    let data = {eventData};
+    let res = await fetch("/api/newevent_admin", {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(data),
     });
     let response = await res.json();
-    setEventData(response.event);
-    toast.success("Event Updated!", {
+    setEventData(initialEventData);
+    toast.success("New event sent for verification!", {
       position: "top-center",
       autoClose: 1500,
       hideProgressBar: true,
@@ -303,7 +299,7 @@ const NewEvent = () => {
               Create A New Event
             </h1>
             <h2 class="mt-1 text-sm leading-6 text-gray-600">
-              Update the Event as Admin
+              Create a new event as admin
             </h2>
 
             <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
@@ -322,6 +318,26 @@ const NewEvent = () => {
                       id="EventName"
                       class="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
                       value={eventData.EventName}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="sm:col-span-4">
+                <label
+                  htmlFor="username"
+                  class="block text-lg font-large font-bold leading-6 text-gray-900"
+                >
+                  Event Host-Choose Already existing User's User ID to set the Host
+                </label>
+                <div class="mt-2">
+                  <div class="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
+                    <input
+                      type="text"
+                      name="EventHost"
+                      id="EventHost"
+                      class="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
+                      value={eventData.EventHost}
                       onChange={handleInputChange}
                     />
                   </div>

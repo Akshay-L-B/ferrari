@@ -1,30 +1,41 @@
-import Course from "../../models/Course";
-import connectDb from "../../middleware/mongoose";
+import mysql from 'mysql2';
+import dbConfig from '../../middleware/dbConfig';
 
 const handler = async (req, res) => {
-  if (req.method === 'DELETE') {
-    const { CourseCode } = req.body;
-    try {
-      const course = await Course.findOne({ "CourseCode": CourseCode });
-      if (!course) {
-        return res.status(404).json({ success: false, message: 'Course not found' });
-      }
-      const { enrolledStudents, instructor } = course;
-      res.status(200).json({ success: true, enrolledStudents, instructor });
-      const result = await Course.deleteOne({ "CourseCode": CourseCode });
-//Just remove the course from the COurses database with help of COurse code as the identifier
-      if (result.deletedCount === 1) {
-        console.log(`Course deleted successfully: ${CourseCode}`);
-      } else {
-        console.error('Error deleting course');
-      }
-    } catch (error) {
-      console.error('Error deleting course:', error);
-      res.status(500).json({ success: false, message: 'Internal Server Error' });
-    }
-  } else {
-    res.status(405).json({ success: false, message: 'Method Not Allowed' });
+  if (req.method !== 'DELETE') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
   }
-}
 
-export default connectDb(handler);
+  const { EventID } = req.body;
+
+  // Validate input
+  if (!EventID) {
+    return res.status(400).json({ error: "Missing 'EventID' parameter" });
+  }
+
+  const connection = mysql.createConnection(dbConfig);
+
+  try {
+    connection.connect();
+
+    // Delete the event from the database
+    await connection
+      .promise()
+      .query(
+        'DELETE FROM events WHERE EventID = ?',
+        [EventID]
+      );
+
+    res.status(200).json({
+      success: true,
+      message: `Event with EventID ${EventID} deleted successfully`,
+    });
+  } catch (error) {
+    console.error('Error deleting event:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  } finally {
+    connection.end();
+  }
+};
+
+export default handler;

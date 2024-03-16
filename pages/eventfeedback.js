@@ -6,7 +6,7 @@ import { ToastContainer, toast } from 'react-toastify';
 const initialFeedbackData = {
   eventOrganization: "How well was the event organized?",
   speakerEffectiveness: "Rate the effectiveness of the speakers/presenters.",
-  relevanceToAudience: "How relevant was the event content to the audience?",
+  relevanceToAudience: "How relevant was the event content to you?",
   audienceEngagement: "How engaged were the attendees during the event?",
   overallSatisfaction: "Rate your overall satisfaction with the event."
 };

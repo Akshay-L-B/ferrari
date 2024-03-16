@@ -120,23 +120,6 @@ const Admin = ({ logout }) => {
         });
 
         if (response.ok) {
-          const { enrolledUsers, instructor } = await response.json();
-          for (const userID of enrolledUsers) {
-            const response1 = await fetch(
-              `/api/removeEventuser?UserID=${userID}&EventID=${EventID}`,
-              {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({}),
-              }
-            );
-
-            if (!response1.ok) {
-              console.error(`Failed to delete the course from user: ${userID}`);
-            }
-          }
           const updatedData = initialData.filter(
             (Event) => Event.EventID !== EventID
           );
@@ -226,8 +209,12 @@ const Admin = ({ logout }) => {
                 <span className="mx-4 font-medium">User Details</span>
               </Link>
 
-              <Link
-                href={"/newevent_admin"}
+              <button
+                onClick={() => {
+                  router.push({
+                    pathname: "/newevent_admin",
+                  });
+                }}
                 className="flex items-center px-4 py-2 mt-5 text-gray-600 transition-colors duration-300 transform rounded-md dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700"
               >
                 <svg
@@ -244,9 +231,8 @@ const Admin = ({ logout }) => {
                     strokeLinejoin="round"
                   />
                 </svg>
-
-                <span className="mx-4 font-medium">Create A New Event</span>
-              </Link>
+                <span className="mx-4 font-medium">New Event</span>
+              </button>
               <Link
                 href={"/CreateUser"}
                 className="flex items-center px-4 py-2 mt-5 text-gray-600 transition-colors duration-300 transform rounded-md dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700"
