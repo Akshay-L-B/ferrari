@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer, toast } from "react-toastify";
 import { useRouter } from "next/router";
-const NewEvent = () => {
+const Slug = () => {
   const router = useRouter();
   useEffect(() => {
     const checkToken = async () => {
@@ -19,7 +19,7 @@ const NewEvent = () => {
     checkToken();
   }, []);
 
-  const { userID,slug } = router.query;
+  const { UserID, slug } = router.query;
   const initialEventData = {
     EventName: "",
     EventHost: "",
@@ -44,14 +44,13 @@ const NewEvent = () => {
         const response = await fetch(`/api/oneevent?EventID=${slug}`);
         const data = await response.json();
         setEventData(data);
-        set
       } catch (error) {
         console.error("Error fetching courses:", error);
       }
     };
 
     fetchEvents();
-  }, []);
+  }, [slug]);
   const [exams, setExams] = useState([]);
   const handleAddExam = () => {
     setExams([...exams, examData]);
@@ -76,11 +75,8 @@ const NewEvent = () => {
     if (!shouldUpdate) {
       return;
     }
-    let data = {
-      ...eventData,
-      EventHost: userID,
-    };
-    let res = await fetch(`api/updateevent?EventID=${slug}`, {
+    let data = eventData;
+    let res = await fetch(`/api/updateevent?EventID=${slug}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -301,7 +297,7 @@ const NewEvent = () => {
         <div class="space-y-12">
           <div class="border-b border-gray-900/10 pb-12">
             <h1 class="text-base font-bold leading-7 text-black">
-              Create A New Event
+              Update the event host
             </h1>
             <h2 class="mt-1 text-sm leading-6 text-gray-600">
               Update the Event as Event Host
@@ -322,7 +318,7 @@ const NewEvent = () => {
                       name="EventName"
                       id="EventName"
                       class="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
-                      value={eventData.EventName}
+                      value={eventData && eventData.EventName}
                       onChange={handleInputChange}
                     />
                   </div>
@@ -340,7 +336,7 @@ const NewEvent = () => {
                     id="EventType"
                     name="EventType"
                     className="block w-full rounded-md border-gray-300 py-1.5 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 sm:max-w-xs sm:text-lg sm:leading-6"
-                    value={eventData.EventType}
+                    value={eventData && eventData.EventType}
                     onChange={handleEventTypeChange}
                   >
                     <option value="Publc">Public</option>
@@ -361,7 +357,7 @@ const NewEvent = () => {
                     name="Description"
                     rows="2"
                     class="block w-1/2 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                    value={eventData.Description}
+                    value={eventData && eventData.Description}
                     onChange={handleInputChange}
                   ></textarea>
                 </div>
@@ -380,7 +376,7 @@ const NewEvent = () => {
                 type="number"
                 name="MaximumAttendance"
                 placeholder="Maximum Attendance"
-                value={eventData.MaximumAttendance}
+                value={eventData && eventData.MaximumAttendance}
                 onChange={handleInputChange}
                 class="border border-purple-500 rounded-md px-4 py-2 text-lg"
               />
@@ -403,7 +399,11 @@ const NewEvent = () => {
                     autoComplete="courseRegDeadline"
                     class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-lg sm:leading-6"
                     value={
-                      new Date(eventData.EventDate).toISOString().split("T")[0]
+                      eventData && eventData.EventDate
+                        ? new Date(eventData.EventDate)
+                            .toISOString()
+                            .split("T")[0]
+                        : ""
                     }
                     onChange={handleInputChange}
                   />
@@ -425,7 +425,7 @@ const NewEvent = () => {
                   name="Location"
                   id="Location"
                   class="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
-                  value={eventData.Location}
+                  value={eventData && eventData.Location}
                   onChange={handleInputChange}
                 />
               </div>
@@ -532,4 +532,4 @@ const NewEvent = () => {
     </div>
   );
 };
-export default NewEvent;
+export default Slug;

@@ -74,7 +74,7 @@ const NewEvent = () => {
     if (!shouldUpdate) {
       return;
     }
-    let data = {eventData};
+    let data = { eventData };
     let res = await fetch("/api/newevent_admin", {
       method: "POST",
       headers: {
@@ -328,7 +328,8 @@ const NewEvent = () => {
                   htmlFor="username"
                   class="block text-lg font-large font-bold leading-6 text-gray-900"
                 >
-                  Event Host-Choose Already existing User's User ID to set the Host
+                  Event Host-Choose Already existing User's User ID to set the
+                  Host
                 </label>
                 <div class="mt-2">
                   <div class="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer, toast } from "react-toastify";
 import { useRouter } from "next/router";
+import Link from "next/link";
 const NewEvent = () => {
   const router = useRouter();
   useEffect(() => {
@@ -119,6 +120,7 @@ const NewEvent = () => {
       credits: selectedCredits,
     }));
   };
+
   const [prerequisitesData, setPrerequisiteData] = useState({
     prerequisitesDegree: "",
     prerequisitesBranch: "",
@@ -437,6 +439,7 @@ const NewEvent = () => {
           </div>
         </div>
       </form>
+
       <div class="mt-10">
         <h1 class="text-xl font-bold leading-8 text-black">
           SET THE COURSE GRADES STRUCTURE

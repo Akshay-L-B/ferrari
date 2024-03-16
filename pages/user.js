@@ -33,11 +33,16 @@ const User = ({ logout }) => {
     const slug = `${EventID}`;
     router.push(`/showtickets/${slug}?UserID=${userID}`);
   };
+  const handleInviteClick = (EventID) => {
+    router.push(`/invitationusers?UserID=${userID}&EventID=${EventID}`);
+  };
+
   const handleEventEdit = (EventID) => {
     const slug = `${EventID}`;
     router.push(`/event/${slug}?UserID=${userID}`);
   };
   const [notifications, setNotifications] = useState([]);
+  const [notifications1, setNotifications1] = useState([]);
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -62,17 +67,21 @@ const User = ({ logout }) => {
     fetchEvents();
   }, [userID]);
 
-  const [notifications1, setNotifications1] = useState([]);
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        if (userDegree && userBranch && userID) {
-          const response = await fetch(
-            `/api/allEventsfilter?degree=${userDegree}&branch=${userBranch}&UserID=${userID}`
-          );
+        if (userID) {
+          const response = await fetch("/api/alleventsfilter", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ UserID: userID }),
+          });
+          const data = await response.json();
           setInitialData1(data);
-          setNotifications1(data);
           setFilteredData1(data);
+          setNotifications1(data);
         }
       } catch (error) {
         console.error("Error fetching the eventHost Events:", error);
@@ -80,7 +89,7 @@ const User = ({ logout }) => {
     };
 
     fetchEvents();
-  }, [userDegree, userBranch, userID]);
+  }, [userID]);
   const handleEnroll = (Event) => {
     const currentDateTime = new Date();
     const deadline = new Date(Event.EventRegDeadline);
@@ -111,6 +120,9 @@ const User = ({ logout }) => {
       });
       setEnrolledEvents([...enrolledEvents, Event]);
     }
+  };
+  const handleFeedback = (EventID) => {
+    router.push(`/eventfeedback?EventID=${EventID}&UserID=${userID}`);
   };
   return (
     <>
@@ -453,10 +465,16 @@ const User = ({ logout }) => {
                           >
                             View Event Feedback
                           </th>
+                          <th
+                            scope="col"
+                            className="px-12 py-3.5 text-sm font-normal text-left rtl:text-right text-gray-500 dark:text-gray-400"
+                          >
+                            Invitations
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200 dark:divide-gray-700">
-                        {filteredData &&
+                        {Array.isArray(filteredData) &&
                           filteredData.map(
                             (
                               Event //Go through the enrolled Events for the particualr studnet and create a table
@@ -528,6 +546,23 @@ const User = ({ logout }) => {
                                     </button>
                                   </div>
                                 </td>
+                                <td className="px-4 py-4 text-sm font-medium whitespace-nowrap dark:bg-gray-900">
+                                  <div>
+                                    <button
+                                      className={`px-6 py-2 font-medium tracking-wide text-white capitalize transition-colors duration-300 transform rounded-lg focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-80 ${
+                                        Event.EventType === "Public"
+                                          ? "bg-gray-400 cursor-not-allowed"
+                                          : "bg-blue-600 hover:bg-blue-500"
+                                      }`}
+                                      onClick={() =>
+                                        handleInviteClick(Event.EventID)
+                                      }
+                                      disabled={Event.EventType === "Public"}
+                                    >
+                                      Invite Users
+                                    </button>
+                                  </div>
+                                </td>
                               </tr>
                             )
                           )}
@@ -580,13 +615,7 @@ const User = ({ logout }) => {
                               scope="col"
                               className="px-5 py-3.5 text-sm font-normal text-left rtl:text-right text-gray-500 dark:text-gray-400"
                             >
-                              Event Dates
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-15 py-3.5 text-sm font-normal text-left rtl:text-right text-gray-500 dark:text-gray-400"
-                            >
-                              Event Registration Deadline
+                              Event Date
                             </th>
                             <th
                               scope="col"
@@ -598,7 +627,13 @@ const User = ({ logout }) => {
                               scope="col"
                               className="px-7 py-3.5 text-sm font-normal text-left rtl:text-right text-gray-500 dark:text-gray-400"
                             >
-                              Give Event Feedback
+                              Event Type
+                            </th>
+                            <th
+                              scope="col"
+                              className="px-7 py-3.5 text-sm font-normal text-left rtl:text-right text-gray-500 dark:text-gray-400"
+                            >
+                              Maximum Attendance
                             </th>
                             <th
                               scope="col"
@@ -606,18 +641,17 @@ const User = ({ logout }) => {
                             >
                               Register Status
                             </th>
+                            <th
+                              scope="col"
+                              className="px-7 py-3.5 text-sm font-normal text-left rtl:text-right text-gray-500 dark:text-gray-400"
+                            >
+                              Give Event Feedback
+                            </th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200 dark:divide-gray-700">
                           {filteredData1.map((Event) => (
                             <tr key={Event.EventID}>
-                              <td className="px-4 py-4 text-sm font-medium whitespace-nowrap dark:bg-gray-900">
-                                <div>
-                                  <h2 className="font-medium text-gray-800 dark:text-white ">
-                                    {Event.EventID}
-                                  </h2>
-                                </div>
-                              </td>
                               <td className="px-4 py-4 text-sm font-medium whitespace-nowrap dark:bg-gray-900">
                                 <div className="inline px-3 py-1 text-sm font-normal text-gray-500 bg-gray-100 rounded-full dark:text-gray-400 gap-x-2 dark:bg-gray-800">
                                   {Event.EventName}
@@ -626,68 +660,39 @@ const User = ({ logout }) => {
                               <td className="px-4 py-4 text-sm whitespace-nowrap dark:bg-gray-900">
                                 <div>
                                   <h4 className="text-gray-700 dark:text-gray-200">
-                                    {Event.description}
+                                    {Event.Description}
                                   </h4>
                                 </div>
                               </td>
-                              <td className="px-8 py-4 text-sm whitespace-nowrap dark:bg-gray-900">
-                                <div className="flex items-center">
-                                  <p className="flex items-center justify-center w-6 h-6 -mx-1 text-s text-blue-600 bg-blue-100 border-2 border-white rounded-full">
-                                    {Event.NoLectures}
-                                  </p>
+                              <td className="px-2 py-4 text-sm font-medium whitespace-nowrap dark:bg-gray-900">
+                                <div className="inline px-3 py-1 text-sm font-normal text-gray-500 bg-gray-100 rounded-full dark:text-gray-400 gap-x-2 dark:bg-gray-800">
+                                  {Event.Location}
                                 </div>
                               </td>
-                              <td className="px-4 py-4 text-sm whitespace-nowrap dark:bg-gray-900">
-                                <div className="flex items-center">
-                                  <p className="flex items-center justify-center w-6 h-6 -mx-1 text-s text-blue-600 bg-blue-100 border-2 border-white rounded-full">
-                                    {Event.NoPracticals}
-                                  </p>
+                              <td className="px-2 py-4 text-sm font-medium whitespace-nowrap dark:bg-gray-900">
+                                <div className="inline px-3 py-1 text-sm font-normal text-gray-500 bg-gray-100 rounded-full dark:text-gray-400 gap-x-2 dark:bg-gray-800">
+                                  {Event.EventDate}
                                 </div>
                               </td>
-                              <td className="px-20 py-4 text-sm whitespace-nowrap dark:bg-gray-900">
-                                <div className="flex items-center">
-                                  <p className="flex items-center justify-center w-6 h-6 -mx-1 text-s text-blue-600">
-                                    {new Date(
-                                      Event.EventRegDeadline
-                                    ).toLocaleDateString()}
-                                  </p>
-                                </div>
-                              </td>
-                              <td className="px-10 py-4 text-sm whitespace-nowrap dark:bg-gray-900">
-                                <div className="flex items-center">
-                                  <p className="flex items-center justify-center w-6 h-6 -mx-1 text-s text-blue-600">
-                                    {Event.RequiredCredits}
-                                  </p>
-                                </div>
-                              </td>
-                              <td className="px-8 py-4 text-sm whitespace-nowrap dark:bg-gray-900">
-                                <div className="flex items-center">
-                                  <p className="flex items-center justify-center w-6 h-6 -mx-1 text-s text-blue-600">
-                                    {Event.RequiredCGPA}
-                                  </p>
-                                </div>
-                              </td>
-                              <td className="px-10 py-4 text-sm whitespace-nowrap dark:bg-gray-900">
-                                <div className="flex items-center">
-                                  <p className="flex items-center justify-center w-6 h-6 -mx-1 text-s text-blue-600 bg-blue-100 border-2 border-white rounded-full">
-                                    {Event.credits}
-                                  </p>
+                              <td className="px-8 py-4 text-sm font-medium whitespace-nowrap dark:bg-gray-900">
+                                <div>
+                                  <h2 className="font-medium text-gray-800 dark:text-white ">
+                                    {Event.EventHost}
+                                  </h2>
                                 </div>
                               </td>
 
                               <td className="px-8 py-4 text-sm font-medium whitespace-nowrap dark:bg-gray-900">
                                 <div>
                                   <h2 className="font-medium text-gray-800 dark:text-white ">
-                                    {Event.eventHost}
-                                  </h2>
-                                </div>
-                              </td>
-                              <td className="px-8 py-4 text-sm font-medium whitespace-nowrap dark:bg-gray-900">
-                                <div>
-                                  <h2 className="font-medium text-gray-800 dark:text-white ">
                                     {Event.EventType}
                                   </h2>
                                 </div>
+                              </td>
+                              <td className="px-4 py-4 text-sm whitespace-nowrap dark:bg-gray-900">
+                                <h4 className="text-gray-700 dark:text-gray-200">
+                                  {Event.MaximumAttendance}
+                                </h4>
                               </td>
                               <td className="px-4 py-4 text-sm font-medium whitespace-nowrap dark:bg-gray-900">
                                 <div>
@@ -696,6 +701,18 @@ const User = ({ logout }) => {
                                     className="px-6 py-2 font-medium tracking-wide text-white capitalize bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-80 rounded-lg"
                                   >
                                     Register
+                                  </button>
+                                </div>
+                              </td>
+                              <td className="px-4 py-4 text-sm font-medium whitespace-nowrap dark:bg-gray-900">
+                                <div>
+                                  <button
+                                    onClick={() =>
+                                      handleFeedback(Event.EventID)
+                                    }
+                                    className="px-6 py-2 font-medium tracking-wide text-white capitalize bg-green-600 hover:bg-green-500 focus:outline-none focus:ring focus:ring-green-300 focus:ring-opacity-80 rounded-lg"
+                                  >
+                                    Give Event Feedback
                                   </button>
                                 </div>
                               </td>

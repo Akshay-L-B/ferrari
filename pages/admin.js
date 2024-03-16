@@ -142,6 +142,47 @@ const Admin = ({ logout }) => {
       }
     }
   };
+  const handleCourseFeedback = async (EventID) => {
+    const userConfirmed = window.confirm(
+      `Are you sure you want to set the feedback for this event: ${EventID}?`
+    );
+
+    if (userConfirmed) {
+      try {
+        const response = await fetch(
+          `/api/updateeventfeedback?EventID=${EventID}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({}),
+          }
+        );
+
+        if (response.ok) {
+          toast.success(
+            `Event Feedback For ${EventID} has been set successfully!`,
+            {
+              position: "top-center",
+              autoClose: 1500,
+              hideProgressBar: true,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              progress: undefined,
+              theme: "light",
+            }
+          );
+        } else {
+          // Handle error
+          console.error("Failed to update course feedback");
+        }
+      } catch (error) {
+        console.error("Error updating course feedback:", error);
+      }
+    }
+  };
   return (
     <div className="flex">
       <ToastContainer
@@ -547,21 +588,20 @@ const Admin = ({ logout }) => {
                             <div>
                               <button
                                 className={`px-6 py-2 font-medium tracking-wide text-white capitalize transition-colors duration-300 transform rounded-lg focus:outline-none ${
-                                  Event.setCourseFeedBackForm === "true" // Check for string "true"
+                                  Event.SetCourseFeedback // Check for boolean value true
                                     ? "bg-gray-500 cursor-not-allowed"
                                     : "bg-blue-600 hover:bg-blue-500 focus:ring focus:ring-blue-300 focus:ring-opacity-80"
                                 }`}
-                                disabled={
-                                  Event.setCourseFeedBackForm === "true"
-                                } // Check for string "true"
+                                disabled={Event.SetCourseFeedback} // Check for boolean value true
                                 onClick={() =>
                                   handleCourseFeedback(Event.EventID)
                                 }
                               >
-                                Set Course Feedback Form
+                                Set Event Feedback form
                               </button>
                             </div>
                           </td>
+
                           <td className="px-4 py-4 text-sm font-medium whitespace-nowrap dark:bg-gray-900">
                             <div>
                               <button

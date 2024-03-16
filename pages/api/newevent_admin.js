@@ -7,6 +7,7 @@ const handler = async (req, res) => {
   }
 
   const {
+    EventID,
     EventName,
     EventHost,
     Description,

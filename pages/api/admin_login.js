@@ -1,5 +1,6 @@
 import mysql from "mysql2";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken"; // Import jsonwebtoken
 import dbConfig from "../../middleware/dbConfig";
 
 const handler = async (req, res) => {
@@ -37,10 +38,16 @@ const handler = async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
+    // Create a JWT token
+    const token = jwt.sign({ email: admin.email }, "hello", {
+      expiresIn: "1h", // Token expiration time
+    });
+
     res.status(201).json({
       success: true,
       message: "Admin login successful",
       admin: { email: admin.email },
+      token, // Send the token in the response
     });
   } catch (error) {
     console.error("Error logging in admin:", error);

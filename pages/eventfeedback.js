@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import 'react-toastify/dist/ReactToastify.css';
-import { ToastContainer, toast } from 'react-toastify';
+import "react-toastify/dist/ReactToastify.css";
+import { ToastContainer, toast } from "react-toastify";
 
 const initialFeedbackData = {
   eventOrganization: "How well was the event organized?",
   speakerEffectiveness: "Rate the effectiveness of the speakers/presenters.",
   relevanceToAudience: "How relevant was the event content to you?",
   audienceEngagement: "How engaged were the attendees during the event?",
-  overallSatisfaction: "Rate your overall satisfaction with the event."
+  overallSatisfaction: "Rate your overall satisfaction with the event.",
 };
 
 const options = ["Poor", "Fair", "Average", "Good", "Excellent"];
@@ -21,7 +21,7 @@ const EventFeedback = () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
-          router.push('/');
+          router.push("/");
         }
       } catch (error) {
         router.push("/");
@@ -31,10 +31,12 @@ const EventFeedback = () => {
     checkToken();
   }, []);
 
-  const { EventID } = router.query;
+  const { EventID, UserID } = router.query;
 
   const [feedback, setFeedback] = useState(
-    Object.fromEntries(Object.keys(initialFeedbackData).map((key) => [key, null]))
+    Object.fromEntries(
+      Object.keys(initialFeedbackData).map((key) => [key, null])
+    )
   );
 
   const handleFeedbackChange = (question, value) => {
@@ -46,7 +48,9 @@ const EventFeedback = () => {
 
   const submitFeedback = async () => {
     try {
-      const shouldUpdate = window.confirm('Are you sure with the event feedback?');
+      const shouldUpdate = window.confirm(
+        "Are you sure with the event feedback?"
+      );
       if (!shouldUpdate) {
         return;
       }
@@ -54,25 +58,31 @@ const EventFeedback = () => {
       console.log(feedback);
       console.log(EventID);
 
-      const response = await fetch(`/api/eventfeedback?EventID=${EventID}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ feedback }),
-      });
+      const response = await fetch(
+        `/api/eventfeedback?EventID=${EventID}&UserID=${UserID}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ feedback }),
+        }
+      );
 
       if (response.ok) {
-        toast.success(`Event Feedback for Event ${EventID} Submitted Successfully!`, {
-          position: "top-center",
-          autoClose: 1500,
-          hideProgressBar: true,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "light",
-        });
+        toast.success(
+          `Event Feedback for Event ${EventID} Submitted Successfully!`,
+          {
+            position: "top-center",
+            autoClose: 1500,
+            hideProgressBar: true,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+          }
+        );
 
         console.log("Feedback submitted successfully");
       } else {
@@ -99,7 +109,9 @@ const EventFeedback = () => {
         theme="colors"
       />
       <div className="space-y-4 ">
-        <h1 className="text-base font-bold leading-7 text-black text-4xl">EVENT FEEDBACK</h1>
+        <h1 className="text-base font-bold leading-7 text-black text-4xl">
+          EVENT FEEDBACK
+        </h1>
         <section className="container px-2 mx-auto w-9/10">
           <div className="flex flex-col">
             <div className="-mx-2 -my-2 overflow-x-auto sm:-mx-4 lg:-mx-6">
@@ -123,28 +135,41 @@ const EventFeedback = () => {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200 dark:divide-gray-700 dark:bg-gray-900">
-                        {Object.entries(initialFeedbackData).map(([key, question], index) => (
-                          <tr key={index}>
-                            <td className="px-2 py-4 text-sm font-medium text-gray-700 dark:text-gray-200">
-                              {question}
-                            </td>
-                            {options.map((option, optionIndex) => (
-                              <td key={optionIndex} className="px-2 py-4 text-sm whitespace-nowrap">
-                                <input
-                                  type="radio"
-                                  name={key}
-                                  value={options.length - optionIndex}
-                                  onChange={() => handleFeedbackChange(key, options.length - optionIndex)}
-                                  checked={feedback[key] === options.length - optionIndex}
-                                />
+                        {Object.entries(initialFeedbackData).map(
+                          ([key, question], index) => (
+                            <tr key={index}>
+                              <td className="px-2 py-4 text-sm font-medium text-gray-700 dark:text-gray-200">
+                                {question}
                               </td>
-                            ))}
-                          </tr>
-                        ))}
+                              {options.map((option, optionIndex) => (
+                                <td
+                                  key={optionIndex}
+                                  className="px-2 py-4 text-sm whitespace-nowrap"
+                                >
+                                  <input
+                                    type="radio"
+                                    name={key}
+                                    value={options.length - optionIndex}
+                                    onChange={() =>
+                                      handleFeedbackChange(
+                                        key,
+                                        options.length - optionIndex
+                                      )
+                                    }
+                                    checked={
+                                      feedback[key] ===
+                                      options.length - optionIndex
+                                    }
+                                  />
+                                </td>
+                              ))}
+                            </tr>
+                          )
+                        )}
                       </tbody>
                     </table>
                   </form>
-                  <div className="px-4 py-2 my-6" colspan="6" className="text-right">
+                  <div className="px-4 py-2 my-6" colspan="6">
                     <button
                       className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                       type="button"
