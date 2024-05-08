@@ -7,7 +7,6 @@ const handler = async (req, res) => {
   }
 
   const { feedback } = req.body;
-
   const { UserID, EventID } = req.query;
 
   // Log received data
@@ -27,9 +26,25 @@ const handler = async (req, res) => {
   try {
     connection.connect();
 
+    // Check if feedback with the same UserID and EventID exists
+    const [existingFeedback] = await connection
+      .promise()
+      .query("SELECT * FROM eventfeedbacks WHERE UserID = ? AND EventID = ?", [
+        UserID,
+        EventID,
+      ]);
+
+    // If existing feedback found, return failure
+    if (existingFeedback.length > 0) {
+      return res.status(201).json({
+        success: false,
+        error: "Feedback already exists for this user and event",
+      });
+    }
+
     // Insert feedback into the database
     await connection.promise().query(
-      `INSERT INTO eventfeedback (UserID, EventID, eventOrganization, speakerEffectiveness, relevanceToAudience, audienceEngagement, overallSatisfaction)
+      `INSERT INTO eventfeedbacks (UserID, EventID, eventOrganization, speakerEffectiveness, relevanceToAudience, audienceEngagement, overallSatisfaction)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         UserID,

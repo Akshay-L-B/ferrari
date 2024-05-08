@@ -25,24 +25,71 @@ const User = ({ logout }) => {
   const [initialData, setInitialData] = useState([]);
   const [filteredData, setFilteredData] = useState(initialData);
   const [filteredData1, setFilteredData1] = useState(initialData1);
-  const [enrolledEvents, setEnrolledEvents] = useState([]);
-  const [userData, setUserData] = useState(null);
-  const [userDegree, setUserDegree] = useState(null);
-  const [userBranch, setUserBranch] = useState(null);
+  const [registrations, setRegistrations] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [notifications1, setNotifications1] = useState([]);
+  useEffect(() => {
+    const fetchSeats = async () => {
+      try {
+        const response = await fetch(`/api/fetchRegistrations`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.success) {
+            // Filter the data to extract EventIDs where UserID is equal to UserID
+            const filteredEventIDs = data.seats
+              .filter((row) => row.UserID === 1) // Check if UserID is equal to 1
+              .map((row) => row.EventID); // Extract EventID from filtered rows
+
+            // Set the filtered EventIDs in the registrations state
+            setRegistrations(filteredEventIDs);
+            console.log("Registrations", filteredEventIDs);
+          }
+        } else {
+          console.error("Failed to fetch seats:", response.statusText);
+        }
+      } catch (error) {
+        console.error("Error fetching seats:", error.message);
+      }
+    };
+    if (userID) {
+      fetchSeats();
+    }
+  }, [userID]);
+
   const handleEventClick = (EventID) => {
-    const slug = `${EventID}`;
-    router.push(`/showtickets/${slug}?UserID=${userID}`);
+    router.push(`/vieweventfeedback?EventID=${EventID}`);
   };
   const handleInviteClick = (EventID) => {
     router.push(`/invitationusers?UserID=${userID}&EventID=${EventID}`);
+  };
+  const handleSeatClick = (EventID) => {
+    router.push(`/seating?UserID=${userID}&EventID=${EventID}`);
   };
 
   const handleEventEdit = (EventID) => {
     const slug = `${EventID}`;
     router.push(`/event/${slug}?UserID=${userID}`);
   };
-  const [notifications, setNotifications] = useState([]);
-  const [notifications1, setNotifications1] = useState([]);
+  const [eventfeedbacks, setEventFeedbackData] = useState([]);
+  const fetchEvents = async () => {
+    try {
+      const response = await fetch(`/api/EventFeedbackall`);
+      const data = await response.json();
+      const filteredData = data.filter((row) => row.UserID === userID);
+      const eventIDs = filteredData.map((row) => row.EventID);
+      console.log(eventIDs + "Event ID");
+      setEventFeedbackData(eventIDs);
+    } catch (error) {
+      console.error("Error fetching the instructor events:", error);
+    }
+  };
+
+  useEffect(
+    (userID) => {
+      fetchEvents();
+    },
+    [userID]
+  );
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -58,6 +105,7 @@ const User = ({ logout }) => {
           setInitialData(data);
           setFilteredData(data);
           setNotifications(data);
+          console.log(notifications + "aydgsiujsakhbd");
         }
       } catch (error) {
         console.error("Error fetching the eventHost Events:", error);
@@ -82,6 +130,7 @@ const User = ({ logout }) => {
           setInitialData1(data);
           setFilteredData1(data);
           setNotifications1(data);
+          console.log(notifications1 + "aydgsiujsakhbd");
         }
       } catch (error) {
         console.error("Error fetching the eventHost Events:", error);
@@ -90,36 +139,8 @@ const User = ({ logout }) => {
 
     fetchEvents();
   }, [userID]);
-  const handleEnroll = (Event) => {
-    const currentDateTime = new Date();
-    const deadline = new Date(Event.EventRegDeadline);
-    if (currentDateTime > deadline) {
-      toast.error(
-        `Cannot enroll to the Event ${Event.EventID} Registration Deadline already passed!`,
-        {
-          position: "top-center",
-          autoClose: 1500,
-          hideProgressBar: true,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "light",
-        }
-      );
-    } else {
-      toast.success(`${Event.EventID} Event Has Been Added To Event Cart!`, {
-        position: "top-center",
-        autoClose: 1500,
-        hideProgressBar: true,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "light",
-      });
-      setEnrolledEvents([...enrolledEvents, Event]);
-    }
+  const handleRegister = (EventID) => {
+    router.push(`/register?EventID=${EventID}&UserID=${userID}`);
   };
   const handleFeedback = (EventID) => {
     router.push(`/eventfeedback?EventID=${EventID}&UserID=${userID}`);
@@ -191,41 +212,11 @@ const User = ({ logout }) => {
                   </svg>
                   <span className="mx-4 font-medium">My Account</span>
                 </button>
-                <Link
-                  href={{
-                    pathname: "/Eventcart",
-                    query: {
-                      enrolledEvents: JSON.stringify(enrolledEvents),
-                      userID,
-                    },
-                  }}
-                  className="flex items-center px-4 py-2 mt-5 text-gray-600 transition-colors duration-300 transform rounded-md dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M15 5V7M15 11V13M15 17V19M5 5C3.89543 5 3 5.89543 3 7V10C4.10457 10 5 10.8954 5 12C5 13.1046 4.10457 14 3 14V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V14C19.8954 14 19 13.1046 19 12C19 10.8954 19.8954 10 21 10V7C21 5.89543 20.1046 5 19 5H5Z"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-
-                  <span className="mx-4 font-medium">
-                    View Event Cart Requests
-                  </span>
-                </Link>
-
                 <button
                   onClick={() => {
                     router.push({
                       pathname: "/dropEvent",
-                      query: { userID: userID, email: userData.email },
+                      query: { UserID: userID },
                     });
                   }}
                   className="flex items-center px-4 py-2 mt-5 text-gray-600 transition-colors duration-300 transform rounded-md dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700"
@@ -275,7 +266,7 @@ const User = ({ logout }) => {
                   onClick={() => {
                     router.push({
                       pathname: "/timetable_user",
-                      query: { ID: userID },
+                      query: { UserID: userID },
                     });
                   }}
                   className="flex items-center px-4 py-2 mt-5 text-gray-600 transition-colors duration-300 transform rounded-md dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700"
@@ -330,7 +321,7 @@ const User = ({ logout }) => {
               </nav>
               <div className="mt-1">
                 <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-200">
-                  Upcoming Event Dates
+                  Upcoming Host Event Dates
                 </h2>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -340,7 +331,70 @@ const User = ({ logout }) => {
                           scope="col"
                           className="px-6 py-3 text-left text-medium font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
                         >
-                          Event Code
+                          Event Name
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-medium font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                        >
+                          Date and Time
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200 dark:divide-gray-700">
+                      {Array.isArray(notifications) &&
+                        notifications
+                          .filter(
+                            (notification) =>
+                              new Date(notification.EventDate) > new Date()
+                          )
+                          .map((notification, index) => {
+                            const currentDateTime = new Date();
+                            const deadline = new Date(notification.EventDate);
+                            const timeDifference = deadline - currentDateTime;
+                            const days = Math.floor(
+                              timeDifference / (1000 * 60 * 60 * 24)
+                            );
+                            const hours = Math.floor(
+                              (timeDifference % (1000 * 60 * 60 * 24)) /
+                                (1000 * 60 * 60)
+                            );
+                            const minutes = Math.floor(
+                              (timeDifference % (1000 * 60 * 60)) / (1000 * 60)
+                            );
+
+                            return (
+                              <tr key={index}>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm font-bold text-gray-100 dark:text-gray-900">
+                                    {notification.EventName}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm font-bold text-gray-500 dark:text-gray-900">
+                                    {`${days} days ${hours} hours ${minutes} minutes`}
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="mt-1">
+                <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-200">
+                  Upcoming Attending Event Dates
+                </h2>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-800">
+                      <tr>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-medium font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                        >
+                          Event Name
                         </th>
                         <th
                           scope="col"
@@ -354,13 +408,11 @@ const User = ({ logout }) => {
                       {notifications1
                         .filter(
                           (notification) =>
-                            new Date(notification.EventRegDeadline) > new Date()
+                            new Date(notification.EventDate) > new Date()
                         )
                         .map((notification, index) => {
                           const currentDateTime = new Date();
-                          const deadline = new Date(
-                            notification.EventRegDeadline
-                          );
+                          const deadline = new Date(notification.EventDate);
                           const timeDifference = deadline - currentDateTime;
                           const days = Math.floor(
                             timeDifference / (1000 * 60 * 60 * 24)
@@ -377,12 +429,14 @@ const User = ({ logout }) => {
                             <tr key={index}>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="text-sm font-bold text-gray-100 dark:text-gray-900">
-                                  {notification.EventID}
+                                  {notification.EventName}
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="text-sm font-bold text-gray-500 dark:text-gray-900">
-                                  {`${days} days ${hours} hours ${minutes} minutes`}
+                                  <span className="mr-1">{`${days} days`}</span>
+                                  <span className="mr-1">{`${hours} hours`}</span>
+                                  <span>{`${minutes} minutes`}</span>
                                 </div>
                               </td>
                             </tr>
@@ -470,6 +524,12 @@ const User = ({ logout }) => {
                             className="px-12 py-3.5 text-sm font-normal text-left rtl:text-right text-gray-500 dark:text-gray-400"
                           >
                             Invitations
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-12 py-3.5 text-sm font-normal text-left rtl:text-right text-gray-500 dark:text-gray-400"
+                          >
+                            Set Seating Arrangements and Tickets
                           </th>
                         </tr>
                       </thead>
@@ -560,6 +620,18 @@ const User = ({ logout }) => {
                                       disabled={Event.EventType === "Public"}
                                     >
                                       Invite Users
+                                    </button>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-4 text-sm font-medium whitespace-nowrap dark:bg-gray-900">
+                                  <div>
+                                    <button
+                                      class="px-6 py-2 font-medium tracking-wide text-white capitalize transition-colors duration-300 transform bg-blue-600 rounded-lg hover:bg-blue-500 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-80"
+                                      onClick={() =>
+                                        handleSeatClick(Event.EventID)
+                                      }
+                                    >
+                                      Set Seating Arrangenment
                                     </button>
                                   </div>
                                 </td>
@@ -697,7 +769,9 @@ const User = ({ logout }) => {
                               <td className="px-4 py-4 text-sm font-medium whitespace-nowrap dark:bg-gray-900">
                                 <div>
                                   <button
-                                    onClick={() => handleEnroll(Event)}
+                                    onClick={() =>
+                                      handleRegister(Event.EventID)
+                                    }
                                     className="px-6 py-2 font-medium tracking-wide text-white capitalize bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-80 rounded-lg"
                                   >
                                     Register
@@ -710,9 +784,21 @@ const User = ({ logout }) => {
                                     onClick={() =>
                                       handleFeedback(Event.EventID)
                                     }
-                                    className="px-6 py-2 font-medium tracking-wide text-white capitalize bg-green-600 hover:bg-green-500 focus:outline-none focus:ring focus:ring-green-300 focus:ring-opacity-80 rounded-lg"
+                                    className={`px-6 py-2 font-medium tracking-wide text-white capitalize bg-green-600 hover:bg-green-500 focus:outline-none focus:ring focus:ring-green-300 focus:ring-opacity-80 rounded-lg ${
+                                      Event.SetCourseFeedback
+                                        ? eventfeedbacks.includes(Event.EventID)
+                                          ? "opacity-50 cursor-not-allowed"
+                                          : ""
+                                        : "opacity-50 cursor-not-allowed"
+                                    }`}
+                                    disabled={
+                                      !Event.SetCourseFeedback ||
+                                      eventfeedbacks.includes(Event.EventID)
+                                    }
                                   >
-                                    Give Event Feedback
+                                    {eventfeedbacks.includes(Event.EventID)
+                                      ? "Feedback already given"
+                                      : "Give Event Feedback"}
                                   </button>
                                 </div>
                               </td>

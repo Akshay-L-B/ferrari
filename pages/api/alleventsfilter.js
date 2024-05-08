@@ -22,7 +22,8 @@ const handler = async (req, res) => {
     const [publicEventsResult] = await connection.promise().query(
       `SELECT *
       FROM events
-      WHERE EventType = 'Public'`
+      WHERE EventType = 'Public' AND EventHost != ?`,
+      [UserID]
     );
     const publicEvents = publicEventsResult;
 

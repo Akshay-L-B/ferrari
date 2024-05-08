@@ -11,7 +11,7 @@ const initialFeedbackData = {
   overallSatisfaction: "Rate your overall satisfaction with the event.",
 };
 
-const options = ["Poor", "Fair", "Average", "Good", "Excellent"];
+const options = ["Excellent", "Good", "Average", "Fair", "Poor"];
 
 const EventFeedback = () => {
   const router = useRouter();
@@ -68,8 +68,8 @@ const EventFeedback = () => {
           body: JSON.stringify({ feedback }),
         }
       );
-
-      if (response.ok) {
+      const data = await response.json();
+      if (response.ok && data.success === true) {
         toast.success(
           `Event Feedback for Event ${EventID} Submitted Successfully!`,
           {
@@ -85,6 +85,17 @@ const EventFeedback = () => {
         );
 
         console.log("Feedback submitted successfully");
+      } else if (response.ok && data.success === false) {
+        toast.error(`Feedback already exists for this user and event`, {
+          position: "top-center",
+          autoClose: 1500,
+          hideProgressBar: true,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
+        });
       } else {
         console.error("Failed to submit feedback");
       }

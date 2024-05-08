@@ -19,6 +19,7 @@
     "next": "14.0.4",
     "prisma": "^5.10.2",
     "react": "^18",
+    "react-big-calendar": "^1.11.2",
     "react-dom": "^18",
     "react-toastify": "^10.0.4"
   },

@@ -7,32 +7,29 @@ const handler = async (req, res) => {
   }
 
   const {
-    EventID,
     EventName,
     EventHost,
     Description,
     EventDate,
     EventType,
     MaximumAttendance,
-    CurrentRevenue,
     Location,
   } = req.body;
-
   // Validate input
   if (!EventName || !EventHost || !Description || !EventDate || !Location) {
     return res.status(400).json({ error: "All fields are required" });
   }
-
+  console.log("Event Date" + EventDate);
   const connection = mysql.createConnection(dbConfig);
 
   try {
     connection.connect();
 
     // Insert the new event into the database
-    await connection
+    const [result] = await connection
       .promise()
       .query(
-        "INSERT INTO events (EventName, EventHost, Description, EventDate, EventType, MaximumAttendance, CurrentRevenue, Location) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO events (EventName, EventHost, Description, EventDate, EventType, MaximumAttendance, Location) VALUES (?, ?, ?, ?, ?, ?, ?)",
         [
           EventName,
           EventHost,
@@ -40,14 +37,15 @@ const handler = async (req, res) => {
           EventDate,
           EventType,
           MaximumAttendance,
-          CurrentRevenue,
           Location,
         ]
       );
+    const EventID = result.insertId;
 
     res.status(201).json({
       success: true,
       message: "Event created successfully",
+      EventID: EventID,
     });
   } catch (error) {
     console.error("Error creating event:", error);

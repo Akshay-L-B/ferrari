@@ -16,10 +16,8 @@ const NewEvent = () => {
         router.push("/");
       }
     };
-
     checkToken();
   }, []);
-
   const { userID } = router.query;
   const initialEventData = {
     EventName: "",
@@ -32,37 +30,53 @@ const NewEvent = () => {
     Location: "",
   };
 
-  const [examData, setExamData] = useState({
-    examName: "",
-    maxMarks: "",
-    weightage: "",
-  });
-
-  const [occupiedSlots, setOccupiedSlots] = useState([]);
-  // useEffect(() => {
-  //   const fetchEvents = async () => {
-  //     try {
-  //       const response = await fetch("/api/allcourses");
-  //       const data = await response.json();
-  //     } catch (error) {
-  //       console.error("Error fetching courses:", error);
-  //     }
-  //   };
-
-  //   fetchEvents();
-  // }, []);
-
+  const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const hoursOfDay = [
+    "8-9 AM",
+    "9-10 AM",
+    "10-11 AM",
+    "11-12 AM",
+    "12-1 PM",
+    "1-2 PM",
+    "2-3 PM",
+    "3-4 PM",
+    "4-5 PM",
+    "5-6 PM",
+    "6-7 PM",
+    "7-8 PM",
+    "8-9 PM",
+    "9-10 PM",
+    "10-11 PM",
+    "11-12 PM",
+  ];
   const [eventData, setEventData] = useState(initialEventData);
-  const [exams, setExams] = useState([]);
-  const handleAddExam = () => {
-    setExams([...exams, examData]);
-    setExamData({ examName: "", maxMarks: "", weightage: "" });
-  };
+  const handleSlotClick = (day, hour) => {
+    const updatedTimetableData = { ...timetableData };
 
-  const handleRemoveExam = (index) => {
-    const updatedExams = [...exams];
-    updatedExams.splice(index, 1);
-    setExams(updatedExams);
+    if (!updatedTimetableData[day]) {
+      updatedTimetableData[day] = {};
+    }
+
+    const slotStatus = updatedTimetableData[day][hour];
+    console.log(updatedTimetableData[day][hour]);
+    // Check if the slot is undefined, empty, or null
+    if (!slotStatus) {
+      updatedTimetableData[day][hour] = "Selected";
+    } else {
+      switch (slotStatus) {
+        case "Available":
+          updatedTimetableData[day][hour] = "Selected";
+          break;
+        case "Selected":
+          updatedTimetableData[day][hour] = "Available";
+          break;
+        default:
+          // Occupied slots are not clickable
+          break;
+      }
+    }
+
+    setTimeTableData(updatedTimetableData);
   };
 
   const handleInputChange = (event) => {
@@ -72,35 +86,132 @@ const NewEvent = () => {
       [name]: value,
     }));
   };
-  const handleSubmit = async (e) => {
-    const shouldUpdate = window.confirm("Do you want to create this new event");
-    if (!shouldUpdate) {
-      return;
+  const sendSelectedSlots = async (EventID) => {
+    try {
+      // Extract selected slots from timetableData
+      const selectedSlots = [];
+      for (const day in timetableData) {
+        for (const hour in timetableData[day]) {
+          if (timetableData[day][hour] === "Selected") {
+            selectedSlots.push({ day, hour });
+          }
+        }
+      }
+
+      // Send selected slots to the server
+      const response = await fetch(
+        `/api/selectedSlots?EventID=${EventID}&UserID=${userID}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ selectedSlots }),
+        }
+      );
+
+      if (response.ok) {
+        toast.success("Selected slots submitted successfully!");
+        setEventData(initialEventData);
+        setTimeTableData({
+          Mon: {},
+          Tue: {},
+          Wed: {},
+          Thu: {},
+          Fri: {},
+        });
+        window.location.reload();
+      } else {
+        throw new Error("Failed to submit selected slots.");
+      }
+    } catch (error) {
+      console.error("Error submitting selected slots:", error.message);
+      toast.error("Failed to submit selected slots.");
     }
-    let data = {
-      ...eventData,
-      EventHost: userID,
-    };
-    let res = await fetch("/api/newevent", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-    let response = await res.json();
-    setEventData(initialEventData);
-    toast.success("New event sent for verification!", {
-      position: "top-center",
-      autoClose: 1500,
-      hideProgressBar: true,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "light",
-    });
   };
+  const [occupiedSlots, setOccupiedSlots] = useState([]);
+
+  useEffect(() => {
+    const fetchOccupiedSlots = async () => {
+      try {
+        const response = await fetch(`/api/occupiedSlots?UserID=${userID}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch occupied slots");
+        }
+        const data = await response.json();
+        console.log(data.timetableEntries);
+        setOccupiedSlots(data.timetableEntries);
+        // Update timetableData based on occupiedSlots
+        const updatedTimetableData = {
+          Mon: {},
+          Tue: {},
+          Wed: {},
+          Thu: {},
+          Fri: {},
+        };
+        for (const slot of data.timetableEntries) {
+          const { DayOfWeek, TimeSlot } = slot;
+          updatedTimetableData[DayOfWeek][TimeSlot] = "Occupied";
+        }
+        setTimeTableData(updatedTimetableData);
+      } catch (error) {
+        console.error("Error fetching occupied slots:", error);
+        // Handle error (e.g., show error message to user)
+      }
+    };
+    fetchOccupiedSlots();
+  }, [userID]);
+  const handleSubmit = async (e) => {
+    try {
+      const shouldUpdate = window.confirm(
+        "Do you want to create this new event"
+      );
+      if (!shouldUpdate) {
+        return;
+      }
+      let data = {
+        ...eventData,
+        EventHost: userID,
+      };
+      console.log(data.EventName + "Event Data");
+      let res = await fetch("/api/newevent", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      let response = await res.json();
+      if (response.success == true) {
+        toast.success("New event sent for verification!", {
+          position: "top-center",
+          autoClose: 1500,
+          hideProgressBar: true,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
+        });
+        sendSelectedSlots(response.EventID);
+      } else {
+        throw new Error("Invalid course details");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Invalid course details", {
+        position: "top-center",
+        autoClose: 1500,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
+    }
+  };
+
   const handleEventTypeChange = (event) => {
     const selectedEventType = event.target.value;
     setEventData((prevData) => ({
@@ -110,24 +221,8 @@ const NewEvent = () => {
   };
   const handleCancel = () => {
     setEventData(initialEventData);
-    setExams([]);
-    setPrerequisites([]);
-  };
-  const handleCreditsChange = (event) => {
-    const selectedCredits = event.target.value;
-    setEventData((prevData) => ({
-      ...prevData,
-      credits: selectedCredits,
-    }));
   };
 
-  const [prerequisitesData, setPrerequisiteData] = useState({
-    prerequisitesDegree: "",
-    prerequisitesBranch: "",
-    LectureSlots: [],
-    PracticalSlots: [],
-  });
-  const [prerequisites, setPrerequisites] = useState([]);
   const [timetableData, setTimeTableData] = useState({
     Mon: {},
     Tue: {},
@@ -135,154 +230,6 @@ const NewEvent = () => {
     Thu: {},
     Fri: {},
   });
-
-  const [selectedPrerequisite, setSelectedPrerequisite] = useState({
-    prerequisitesDegree: "",
-    prerequisitesBranch: "",
-  });
-
-  const generateTimetable = () => {
-    const filteredSlots = occupiedSlots.filter(
-      (slot) =>
-        slot.prerequisitesDegree === selectedPrerequisite.prerequisitesDegree &&
-        slot.prerequisitesBranch === department
-    );
-    const updatedTimetableData = {
-      Mon: {},
-      Tue: {},
-      Wed: {},
-      Thu: {},
-      Fri: {},
-    };
-    filteredSlots.forEach((slot) => {
-      slot.LectureSlots.forEach((lecture) => {
-        if (!updatedTimetableData[lecture.day]) {
-          updatedTimetableData[lecture.day] = {};
-        }
-        updatedTimetableData[lecture.day][lecture.time] = "Occupied";
-      });
-      slot.PracticalSlots.forEach((practical) => {
-        if (!updatedTimetableData[practical.day]) {
-          updatedTimetableData[practical.day] = {};
-        }
-        updatedTimetableData[practical.day][practical.time] = "Occupied";
-      });
-    });
-    setTimeout(() => {
-      setTimeTableData(updatedTimetableData);
-    }, 100);
-  };
-
-  const updateTimeTable = (Slots) => {
-    const currentTimetableData = { ...timetableData };
-
-    Slots.LectureSlots.forEach((lecture) => {
-      if (!currentTimetableData[lecture.day]) {
-        currentTimetableData[lecture.day] = {};
-      }
-      currentTimetableData[lecture.day][lecture.time] = "Occupied";
-    });
-    Slots.PracticalSlots.forEach((practical) => {
-      if (!currentTimetableData[practical.day]) {
-        currentTimetableData[practical.day] = {};
-      }
-      currentTimetableData[practical.day][practical.time] = "Occupied";
-    });
-
-    setTimeTableData(currentTimetableData);
-  };
-  const handleAddPrerequisites = () => {
-    setPrerequisites([...prerequisites, prerequisitesData]);
-    setPrerequisiteData({
-      prerequisitesDegree: "",
-      prerequisitesBranch: department,
-      LectureSlots: [],
-      PracticalSlots: [],
-    });
-  };
-  const handleRemovePrerequisite = (index) => {
-    const updatedPrerequisites = [...prerequisites];
-    updatedPrerequisites.splice(index, 1);
-    setPrerequisites(updatedPrerequisites);
-    setTimeTableData({
-      Mon: {},
-      Tue: {},
-      Wed: {},
-      Thu: {},
-      Fri: {},
-    });
-  };
-  const handleSlotChange = (
-    prerequisiteIndex,
-    slotIndex,
-    slotType,
-    key,
-    value,
-    degree,
-    branch
-  ) => {
-    const updatedPrerequisites = [...prerequisites];
-    const updatedPrerequisite = { ...updatedPrerequisites[prerequisiteIndex] };
-    if (!updatedPrerequisite[slotType]) {
-      updatedPrerequisite[slotType] = [];
-    }
-    if (!updatedPrerequisite[slotType][slotIndex]) {
-      updatedPrerequisite[slotType][slotIndex] = {};
-    }
-    updatedPrerequisite[slotType][slotIndex][key] = value;
-    updatedPrerequisites[prerequisiteIndex] = updatedPrerequisite;
-
-    setPrerequisites(updatedPrerequisites);
-  };
-
-  const handleCheck = (prerequisite) => {
-    console.log("Checking prerequisites:", prerequisite);
-    let isConflict = false;
-    if (prerequisite.LectureSlots) {
-      console.log("Checking Lecture Slots:", prerequisite.LectureSlots);
-
-      for (let j = 1; j < prerequisite.LectureSlots.length; j++) {
-        const slot = prerequisite.LectureSlots[j];
-        console.log("Checking Lecture Slot:", slot);
-
-        if (slot.day) {
-          const { day, time } = slot;
-          console.log("Checking Day and Time:", day, time);
-
-          if (timetableData[day] && timetableData[day][time] === "Occupied") {
-            isConflict = true;
-            break;
-          }
-        }
-      }
-    }
-
-    if (!isConflict && prerequisite.PracticalSlots) {
-      console.log("Checking Practical Slots:", prerequisite.PracticalSlots);
-
-      for (let k = 1; k < prerequisite.PracticalSlots.length; k++) {
-        const slot = prerequisite.PracticalSlots[k];
-        console.log("Checking Practical Slot:", slot);
-
-        if (slot.day) {
-          const { day, time } = slot;
-          console.log("Checking Day and Time:", day, time);
-
-          if (timetableData[day] && timetableData[day][time] === "Occupied") {
-            isConflict = true;
-            break;
-          }
-        }
-      }
-    }
-
-    if (isConflict) {
-      alert("Error: Slots are already occupied!");
-    } else {
-      alert("Timetable is available. Updating timetable...");
-      updateTimeTable(prerequisite);
-    }
-  };
 
   return (
     <div>
@@ -439,82 +386,65 @@ const NewEvent = () => {
           </div>
         </div>
       </form>
-
-      <div class="mt-10">
-        <h1 class="text-xl font-bold leading-8 text-black">
-          SET THE COURSE GRADES STRUCTURE
-        </h1>
-        <div class="space-y-6">
-          <table class="w-full border-collapse border border-purple-500 text-lg">
-            <thead>
-              <tr class="bg-purple-500 text-white">
-                <th class="py-3 px-6 text-left">Exam Name</th>
-                <th class="py-3 px-6 text-left">Max Marks</th>
-                <th class="py-3 px-6 text-left">Weightage</th>
-                <th class="py-3 px-6 text-left">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="text-lg">
-              {exams.map((exam, index) => (
-                <tr key={index} class="border-b border-purple-500">
-                  <td class="py-3 px-6 text-left">{exam.examName}</td>
-                  <td class="py-3 px-6 text-left">{exam.maxMarks}</td>
-                  <td class="py-3 px-6 text-left">{exam.weightage}</td>
-                  <td class="py-3 px-6 text-left">
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveExam(index)}
-                      class="text-red-600 hover:underline"
-                    >
-                      Remove
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <div class="flex items-center gap-x-8 mt-4">
-            <input
-              type="text"
-              name="examName"
-              placeholder="Exam Name"
-              value={examData.examName}
-              onChange={(e) =>
-                setExamData({ ...examData, examName: e.target.value })
-              }
-              class="border border-purple-500 rounded-md px-4 py-2 text-lg"
-            />
-            <input
-              type="number"
-              name="maxMarks"
-              placeholder="Max Marks"
-              value={examData.maxMarks}
-              onChange={(e) =>
-                setExamData({ ...examData, maxMarks: e.target.value })
-              }
-              class="border border-purple-500 rounded-md px-4 py-2 text-lg"
-            />
-            <input
-              type="number"
-              name="weightage"
-              placeholder="Weightage"
-              value={examData.weightage}
-              onChange={(e) =>
-                setExamData({ ...examData, weightage: e.target.value })
-              }
-              class="border border-purple-500 rounded-md px-4 py-2 text-lg"
-            />
-            <button
-              type="button"
-              onClick={handleAddExam}
-              class="bg-indigo-600 text-white px-6 py-2 rounded-md text-lg"
-            >
-              Add Exam
-            </button>
+      <section className="container px-4 mx-auto">
+        <div className="flex flex-col mt-6">
+          <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+            <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
+              <div className="overflow-hidden border border-gray-200 dark:border-gray-700 md:rounded-lg">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-800">
+                    <tr>
+                      <th
+                        scope="col"
+                        className="py-3.5 px-4 text-lg font-normal text-left rtl:text-right text-gray-500 dark:text-gray-400"
+                      >
+                        Time/Day
+                      </th>
+                      {daysOfWeek.map((day) => (
+                        <th
+                          key={day}
+                          scope="col"
+                          className="px-4 py-3.5 text-lg font-normal text-left rtl:text-right text-gray-500 dark:text-gray-400"
+                        >
+                          {day}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200 dark:divide-gray-700 dark:bg-gray-900">
+                    {hoursOfDay.map((hour) => (
+                      <tr key={hour}>
+                        <td className="px-4 py-4 text-lg text-gray-500 dark:text-gray-300 whitespace-nowrap">
+                          {hour}
+                        </td>
+                        {daysOfWeek.map((day) => (
+                          <td
+                            key={`${day}-${hour}`}
+                            className={`px-4 py-4 text-lg whitespace-nowrap cursor-pointer ${
+                              timetableData[day] &&
+                              timetableData[day][hour] === "Occupied"
+                                ? "text-red-500"
+                                : timetableData[day] &&
+                                  timetableData[day][hour] === "Selected"
+                                ? "text-blue-500"
+                                : "text-green-500"
+                            }`}
+                            onClick={() => handleSlotClick(day, hour)}
+                          >
+                            {timetableData[day] && timetableData[day][hour]
+                              ? timetableData[day][hour]
+                              : "Available"}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
       <div class="mt-6 flex items-center justify-end gap-x-6">
         <button
